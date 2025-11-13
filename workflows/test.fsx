@@ -7,4 +7,10 @@ open ARCtrl
 let arc = ARC()
 let arcPath = @"/home/paulinehans/Dokumente/TestARCForQualIQon"
 let loadingARC = ARC.load(arcPath)
-let writing = arc.Write(arcPath)
+
+let writing = arc.Write("/home/paulinehans/Dokumente/test")
+
+
+
+
+ 
