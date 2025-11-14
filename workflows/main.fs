@@ -17,6 +17,8 @@ let getAllParameters (table:ArcTable) =
     |> Seq.toList
 
 let get =  accsessAssays |> getAllParameters
+printfn "%A" get
+
 
 let whatDefinesAProteomicARC = 
     let definitionList = [

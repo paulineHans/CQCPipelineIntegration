@@ -64,3 +64,38 @@ let oaList =
  
 oaList
 |> List.tryPick (fun oa -> oa.Name)
+
+
+
+
+
+
+
+
+//Code Snippet Caro
+// let sampleNameColumn : string = "test"  
+// let getSample (fN) =
+//     arc.PreviousParametersOf(fN).[sampleNameColumn].ValueText 
+
+// let condition1 : string = "test2"
+
+// let getCondition1 (fN) =
+//     lastData
+//     |> Seq.filter (fun x -> getSample x = fN)
+//     |> Seq.map (fun x ->
+//         match arc.PreviousValuesOf(x).[condition1].TryValueText with
+//         | Some x -> x
+//         | None -> ""
+//     )
+//     |> Seq.head
+
+// let columnToFilter : string = "test1"
+// let getFilterColumn (fN) =
+//     lastData
+//     |> Seq.filter (fun x -> getSample x = fN)
+//     |> Seq.map (fun x ->
+//         match arc.PreviousValuesOf(x).[columnToFilter].TryValueText with
+//         | Some x -> x
+//         | None -> ""
+//     )
+//     |> Seq.head
