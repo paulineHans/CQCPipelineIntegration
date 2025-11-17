@@ -14,7 +14,6 @@ let arc = ARC.load path
 arc.MakeDataFilesAbsolute()
 arc.DataContextMapping()
 
-  
 let getData = arc.Assays.[0].Tables.[0]
 printfn"%A"getData
 
@@ -58,8 +57,8 @@ let getAllParameters (table:ArcTable) =
         | CompositeHeader.Parameter p -> Some p
         | _ -> None )
     |> Seq.toList
-let dataDigestion = getAllParameters getData 
-let checkParameterDisgest = dataDigestion |> List.exists (fun x -> x.Name.Value.Contains("Digestion"))
+let allParameters = getAllParameters getData 
+let checkParameterDisgest = allParameters |> List.exists (fun x -> x.Name.Value.Contains("Digestion"))
 checkParameterDisgest
 
 //checkForTrypsin 
@@ -87,3 +86,33 @@ let validateTrypsin = exe |> List.exists (fun x -> x.Name.Value.Contains("Trypsi
 validateTrypsin
 let validateLysC = exe |> List.exists (fun x -> x.Name.Value.Contains("Lys-C"))
 validateLysC
+
+//check for anything with labeling 
+let searchForLabeling = allParameters |> List.exists (fun x -> x.Name.Value.Contains("labeling"))
+searchForLabeling
+
+let exe1 = getOntologyListByHeaderOntology getData "Isotope labeling"
+let validate15N = exe1 |> List.exists (fun x -> x.Name.Value.Contains("15N"))
+validate15N
+
+
+
+
+
+// CHECK RUNS 
+let runs = arc.Runs.[0].Tables.[0]
+let checkForMzMLFiles = runs.OutputNames |> List.exists(fun x -> x.Contains("mzML"))
+checkForMzMLFiles
+
+let checkForMzLightFiles = 
+    let data = arc.Runs.[0].Tables.[1]
+    let validation = data.OutputNames |> List.exists(fun x -> x.Contains("mzlite"))
+    validation
+checkForMzLightFiles
+
+let checkForPSMFiles = 
+    let data = arc.Runs.[0].Tables.[2]
+    let validation = data.OutputNames |> List.exists(fun x -> x.Contains("psm"))
+    validation
+checkForPSMFiles 
+
