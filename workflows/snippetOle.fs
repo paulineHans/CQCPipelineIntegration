@@ -99,3 +99,99 @@ oaList
 //         | None -> ""
 //     )
 //     |> Seq.head
+
+
+
+
+    type WorkflowArgs =
+        | [<Unique; AltCommandLine("-i")>] ARC_Path of string
+        | [<Unique; AltCommandLine("-o")>] Output_Path of string
+        interface IArgParserTemplate with
+            member this.Usage =
+                match this with
+                | ARC_Path _     -> "Path to the input ARC folder"
+                | Output_Path _  -> "Path to the output file folder"
+
+    let parser = ArgumentParser.Create<WorkflowArgs>(programName = "01_Heatmap.fsx")
+    let args = fsi.CommandLineArgs |> Array.skip 1
+    let results : ParseResults<WorkflowArgs> = parser.ParseCommandLine(inputs = args, raiseOnUsage = false)
+
+    if results.IsUsageRequested || (results.TryGetResult ARC_Path = None && results.TryGetResult Output_Path = None) then
+        printfn "%s" (parser.PrintUsage())
+
+    let arcPath =
+        match results.TryGetResult ARC_Path with
+        | Some p -> printfn "ARC path set to: %s" p; p
+        | None ->
+            let defaultPath = __SOURCE_DIRECTORY__ + "/../../"
+            printfn "No ARC path given. Using default: %s" defaultPath
+            defaultPath
+
+    let outputPath =
+        match results.TryGetResult Output_Path with
+        | Some p -> printfn "Output path set to: %s" p; p
+        | None ->
+            let defaultPath = __SOURCE_DIRECTORY__ + "/../../runs/Proteomics/heatmap/"
+            printfn "No output path given. Using default: %s" defaultPath
+            defaultPath
+
+// printfn "[INFO] ARC path argument: %s" Arguments.arcPath
+// printfn "[INFO] Output path argument: %s" Arguments.outputPath
+///////////////////////////
+//// Prep paths
+///////////////////////////
+let outDir = Arguments.outputPath
+Directory.CreateDirectory(outDir) |> ignore
+let arcPath = Arguments.arcPath 
+///////////////////////////
+//// Accessing the ARC
+///////////////////////////
+let arc = ARC.load(arcPath)
+arc.MakeDataFilesAbsolute()
+arc.DataContextMapping()
+
+
+///////////////////////////
+//// Preparing meta data lookup
+// printfn ("[DEBUG] Preparing meta data lookup")
+///////////////////////////
+let bioRepGroup = OntologyAnnotation.fromTermAnnotation("DPBO:1000183", name = "biological replicate group")
+let timePoint = OntologyAnnotation.fromTermAnnotation("NFDI4PSO:0000034", name = "Time point")
+let bioRep = OntologyAnnotation.fromTermAnnotation("NFDI4PSO:0000042", name = "Biological replicate")
+let phase = OntologyAnnotation.fromTermAnnotation("NCIT:C25257", name = "Phase")
+let protID = OntologyAnnotation.fromTermAnnotation("NCIT:C165059", name = "Protein Identifier")
+let lfqIntensity = OntologyAnnotation.fromTermAnnotation("MS:1001902", name = "MaxQuant:LFQ intensity")
+
+let getBioRepGroup (fN: QNode) =
+    arc.PreviousCharacteristicsOf(fN).[bioRepGroup].ValueText 
+let getTimePoint (fN: QNode) =
+    arc.PreviousParametersOf(fN).[timePoint].ValueText
+let getBioRep (fN: QNode) =
+    arc.PreviousCharacteristicsOf(fN).[bioRep].ValueText
+let getPhase (fN: QNode) =
+    arc.PreviousParametersOf(fN).[phase].ValueText
+
+///////////////////////////
+//// Metadata-guided identification of samples and files to analyze 
+// printfn ("[DEBUG] Metadata-guided identification of samples and files to analyze")
+///////////////////////////
+let dataToAnalyse = arc.GetAssay("Proteomics_Imputation").LastData
+
+let availableGroups = 
+    dataToAnalyse
+    |> Seq.map (fun x -> getBioRepGroup x)
+    |> Seq.distinct
+
+let exp35, exp40 = Seq.item 0 availableGroups, Seq.item 1 availableGroups
+
+let only35degreesRep1 = 
+    dataToAnalyse
+    |> Seq.filter (fun x -> getBioRepGroup x = exp35)
+    |> Seq.filter (fun x -> getBioRep x = "1")
+
+let filePath = 
+    only35degreesRep1
+    |> Seq.map (fun x -> x.FilePath)
+    |> Seq.distinct
+    |> Seq.head
+ 
