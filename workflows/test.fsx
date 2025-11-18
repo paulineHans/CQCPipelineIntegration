@@ -100,19 +100,47 @@ validate15N
 
 
 // CHECK RUNS 
-let runs = arc.Runs.[0].Tables.[0]
+let runs = arc.Runs.[1].Tables.[0]
 let checkForMzMLFiles = runs.OutputNames |> List.exists(fun x -> x.Contains("mzML"))
 checkForMzMLFiles
 
 let checkForMzLightFiles = 
-    let data = arc.Runs.[0].Tables.[1]
+    let data = arc.Runs.[1].Tables.[1]
     let validation = data.OutputNames |> List.exists(fun x -> x.Contains("mzlite"))
     validation
 checkForMzLightFiles
 
 let checkForPSMFiles = 
-    let data = arc.Runs.[0].Tables.[2]
+    let data = arc.Runs.[1].Tables.[2]
     let validation = data.OutputNames |> List.exists(fun x -> x.Contains("psm"))
     validation
 checkForPSMFiles 
 
+let checkForPSMSFiles = 
+    let data = arc.Runs.[1].Tables.[3]
+    let validation = data.OutputNames |> List.exists(fun x -> x.Contains("qpsm"))
+    validation
+checkForPSMSFiles 
+
+let checkForQuantFiles = 
+    let data = arc.Runs.[1].Tables.[4]
+    let validation = data.OutputNames |> List.exists(fun x -> x.Contains("quant"))
+    validation
+checkForQuantFiles 
+
+let checkForProtFiles = 
+    let data = arc.Runs.[1].Tables.[5]
+    let validation = data.OutputNames |> List.exists(fun x -> x.Contains("prot"))
+    validation
+checkForProtFiles 
+
+
+//IDEE = such nach files im ARC z.B. runs -> psmstats falls vorhanden dann suchen wo dieses file in den
+//metadaten vorhanden ist und parameter geben z.B. labeling 
+
+open ARCtrl.FileSystem
+let test = FileSystemTree.filterFiles (fun x -> x.Contains("psm")) 
+test
+
+let test2= arc.FileSystem.Tree.ToFilePaths
+test2
