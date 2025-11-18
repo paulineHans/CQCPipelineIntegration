@@ -4,9 +4,12 @@
 #r "nuget: ARCtrl.QueryModel, 3.0.0-alpha.1"
 
 open System
+open ARCtrl.FileSystem
 open ARCtrl
 open ARCtrl.NET
 open ARCtrl.QueryModel
+open System.IO 
+open System
 
 let path = @"/home/paulinehans/Dokumente/TestARCForQualIQon"
 
@@ -138,9 +141,33 @@ checkForProtFiles
 //IDEE = such nach files im ARC z.B. runs -> psmstats falls vorhanden dann suchen wo dieses file in den
 //metadaten vorhanden ist und parameter geben z.B. labeling 
 
-open ARCtrl.FileSystem
-let test = FileSystemTree.filterFiles (fun x -> x.Contains("psm")) 
-test
+// let getFiles (filepath) = 
+//     filepath 
+//     |> List.exists(fun x -> x.Contains("psm"))
 
-let test2= arc.FileSystem.Tree.ToFilePaths
-test2
+
+let rec searchFiles (directoryName: string) (fileName: string) : string[] =
+    // Get files in the current directory that match the filename.
+    let currentFiles = Directory.GetFiles(directoryName,fileName )
+    
+    // Get all subdirectories.
+    let subDirectories = Directory.GetDirectories(directoryName)
+    
+    // Recursively search each subdirectory.
+    let subDirFiles =
+        subDirectories
+        |> Array.collect (fun subDir -> searchFiles subDir fileName)
+    
+    // Combine files from the current directory and all subdirectories.
+    Array.append currentFiles subDirFiles
+
+let accsesFiles (directoryName: string) =
+    let directoryPath = (String.concat "" [| "./runs" ;directoryName|])
+    let searchpattern = "*.psm"
+    let files = searchFiles directoryPath searchpattern
+    files 
+accsesFiles "/dilutionSeriesChlamy_RUNS"
+
+let test = arc.RunIdentifiers 
+test
+    
