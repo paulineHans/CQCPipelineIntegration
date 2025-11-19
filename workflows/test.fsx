@@ -1,3 +1,4 @@
+
 //test CQC for QualIQon - starting with getting accses of data stored in the ARC 
 
 #r "nuget: ARCtrl.NET, 2.0.2"
@@ -46,6 +47,7 @@ checkMassSpectrometry
 //output files 
 
 let outputFilesWiff = arc.GetAssay("dilutionSeriesChlamy_ASSAY").LastData
+printfn "%A" outputFilesWiff
 let verify : bool =
     outputFilesWiff
     |> List.exists (fun x -> x.Name.Contains("wiff"))
@@ -101,38 +103,38 @@ validate15N
 
 
 
-
+let run = arc.Runs
 // CHECK RUNS 
-let runs = arc.Runs.[1].Tables.[0]
+let runs = arc.Runs.[0].Tables.[0]
 let checkForMzMLFiles = runs.OutputNames |> List.exists(fun x -> x.Contains("mzML"))
 checkForMzMLFiles
 
 let checkForMzLightFiles = 
-    let data = arc.Runs.[1].Tables.[1]
+    let data = arc.Runs.[0].Tables.[1]
     let validation = data.OutputNames |> List.exists(fun x -> x.Contains("mzlite"))
     validation
 checkForMzLightFiles
 
 let checkForPSMFiles = 
-    let data = arc.Runs.[1].Tables.[2]
+    let data = arc.Runs.[0].Tables.[2]
     let validation = data.OutputNames |> List.exists(fun x -> x.Contains("psm"))
     validation
 checkForPSMFiles 
 
 let checkForPSMSFiles = 
-    let data = arc.Runs.[1].Tables.[3]
+    let data = arc.Runs.[0].Tables.[3]
     let validation = data.OutputNames |> List.exists(fun x -> x.Contains("qpsm"))
     validation
 checkForPSMSFiles 
 
 let checkForQuantFiles = 
-    let data = arc.Runs.[1].Tables.[4]
+    let data = arc.Runs.[0].Tables.[4]
     let validation = data.OutputNames |> List.exists(fun x -> x.Contains("quant"))
     validation
 checkForQuantFiles 
 
 let checkForProtFiles = 
-    let data = arc.Runs.[1].Tables.[5]
+    let data = arc.Runs.[0].Tables.[5]
     let validation = data.OutputNames |> List.exists(fun x -> x.Contains("prot"))
     validation
 checkForProtFiles 
@@ -141,33 +143,48 @@ checkForProtFiles
 //IDEE = such nach files im ARC z.B. runs -> psmstats falls vorhanden dann suchen wo dieses file in den
 //metadaten vorhanden ist und parameter geben z.B. labeling 
 
-// let getFiles (filepath) = 
-//     filepath 
-//     |> List.exists(fun x -> x.Contains("psm"))
-
-
 let rec searchFiles (directoryName: string) (fileName: string) : string[] =
-    // Get files in the current directory that match the filename.
-    let currentFiles = Directory.GetFiles(directoryName,fileName )
-    
-    // Get all subdirectories.
-    let subDirectories = Directory.GetDirectories(directoryName)
-    
-    // Recursively search each subdirectory.
-    let subDirFiles =
+    // Files im aktuellen Verzeichnis
+    let currentFiles : string[] =
+        Directory.GetFiles(path = directoryName, searchPattern = fileName)
+
+    // alle Subdirs
+    let subDirectories : string[] =
+        Directory.GetDirectories(path = directoryName)
+
+    // rekursiv in Subdirs suchen
+    let subDirFiles : string[] =
         subDirectories
         |> Array.collect (fun subDir -> searchFiles subDir fileName)
-    
-    // Combine files from the current directory and all subdirectories.
+
+    // beides zusammenkleben
     Array.append currentFiles subDirFiles
 
-let accsesFiles (directoryName: string) =
-    let directoryPath = (String.concat "" [| "./runs" ;directoryName|])
-    let searchpattern = "*.psm"
-    let files = searchFiles directoryPath searchpattern
-    files 
-accsesFiles "/dilutionSeriesChlamy_RUNS"
 
-let test = arc.RunIdentifiers 
-test
+let searchForPattern : string list = [
+    "*.psm"
+    "*.qpsm"
+    "*.quant"
+    "*.prot"
+    "*.tsv"
+    "*.txt"
+]
+
+let accessFiles (directoryName: string) : string[] =
+    let directoryPath = "./runs" + directoryName
+
+    searchForPattern
+    |> List.map (fun pattern -> searchFiles directoryPath pattern) 
+    |> List.toArray                                               
+    |> Array.concat                                               
+
+let execution = accessFiles "/dilutionSeriesChlamy_RUNS"
+let validaaation = 
+    if Array.isEmpty execution then printfn"no files detected"
+    else printfn "files detected"
+validaaation
+
+//rekursive FUnktion um checkt ok sind die Files da, jetzt müssen wir die Files in den metadaten suchen also table übergreifend 
+
+
     
