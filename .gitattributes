@@ -76,3 +76,5 @@ assays/dilutionSeriesChlamy_ASSAY/dataset/20170519[[:space:]]TM[[:space:]]FScon3
 assays/dilutionSeriesChlamy_ASSAY/dataset/20170519[[:space:]]TM[[:space:]]FScon3601/20170519[[:space:]]TM[[:space:]]FScon3617.wiff.scan filter=lfs diff=lfs merge=lfs -text
 assays/dilutionSeriesChlamy_ASSAY/dataset/.gitkeep filter=lfs diff=lfs merge=lfs -text
 runs/dilutionSeriesChlamy_RUNS/20170519[[:space:]]TM[[:space:]]FScon3501.psm filter=lfs diff=lfs merge=lfs -text
+runs/dilutionSeriesChlamy_RUNS/evidence.txt filter=lfs diff=lfs merge=lfs -text
+runs/dilutionSeriesChlamy_RUNS/protein.tsv filter=lfs diff=lfs merge=lfs -text
