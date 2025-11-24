@@ -13,14 +13,11 @@ open System.IO
 open System
 
 let path = @"/home/paulinehans/Dokumente/TestARCForQualIQon"
+let path2= "/home/paulinehans/Dokumente/Arcs/CurtABC_ChlRe_PPI"
 
-let arc = ARC.load path
+let arc = ARC.load path2
 arc.MakeDataFilesAbsolute()
 arc.DataContextMapping()
-
-let getData = arc.Assays.[0].Tables.[0]
-printfn"%A"getData
-
 
 let getIdentifier = arc.AssayIdentifiers
 printfn "%A" getIdentifier
@@ -29,25 +26,21 @@ printfn "%A" getIdentifier
 
 //check isa file 
 //check for MeasurementType Proteomics/proteomics 
-let getMesurementType = arc.Assays.[0].MeasurementType.Value
-let checkProteomics = 
-    if getMesurementType.NameText.ToLower().Contains("proteomics") then printfn "Proteomics found"
-    else failwith"no Proteomics found in Measurement type"
-printfn "%A" checkProteomics
+let tables (arc: ARC) =
+        arc.Assays.Count > 0
+        && arc.Assays
+        |> Seq.exists (fun assay -> assay.Tables.Count > 0 )
+tables arc
 
-//check for Technologytype Mass Spectrometry 
-let getTechnologyType = arc.Assays.[0].TechnologyType.Value
-printfn "%A" getTechnologyType
-let checkMassSpectrometry  = 
-    if getTechnologyType.NameText.ToLower().Contains("mass spectrometry") then printfn "Mass Spectrometry as indicator for Proteomics found"
-    else failwith"no Mass spectrometry as indicator for Proteomics found" 
-checkMassSpectrometry
+let measurementType = arc.Assays |> Seq.exists (fun x -> x.MeasurementType.Value.NameText.ToLower().Contains"proteomics")  
+measurementType
+let technologyType = arc.Assays |> Seq.exists (fun x -> x.MeasurementType.Value.NameText.ToLower().Contains"mass spectrometry")
+technologyType
 
 //check Assay tables 
 //output files 
 
 let outputFilesWiff = arc.GetAssay("dilutionSeriesChlamy_ASSAY").LastData
-printfn "%A" outputFilesWiff
 let verify : bool =
     outputFilesWiff
     |> List.exists (fun x -> x.Name.Contains("wiff"))
@@ -55,16 +48,12 @@ verify
 
 //check for Digestion 
 //Parameter Digestion 
-let getAllParameters (table:ArcTable) =
-    table.Headers
-    |> Seq.choose (fun x ->
-        match x with
-        | CompositeHeader.Parameter p -> Some p
-        | _ -> None )
-    |> Seq.toList
-let allParameters = getAllParameters getData 
-let checkParameterDisgest = allParameters |> List.exists (fun x -> x.Name.Value.Contains("Digestion"))
-checkParameterDisgest
+let getTableIfExists (arc: ARC) : ArcTable option =
+    if arc.Assays.Count > 0 && arc.Assays.[0].Tables.Count > 0
+    then Some arc.Assays.[0].Tables.[0]
+    else None
+let table = getTableIfExists arc
+table
 
 //checkForTrypsin 
 let trypsinTerm (header: CompositeHeader) =
@@ -86,24 +75,23 @@ let getOntologyListByHeaderOntology (table : ArcTable) (ontologyName : string) =
                     |> List.ofSeq
             | None -> [] 
 
-let exe = getOntologyListByHeaderOntology getData "Digestion"
+let exe = getOntologyListByHeaderOntology table.Value "Digestion"
 let validateTrypsin = exe |> List.exists (fun x -> x.Name.Value.Contains("Trypsin"))
 validateTrypsin
 let validateLysC = exe |> List.exists (fun x -> x.Name.Value.Contains("Lys-C"))
 validateLysC
 
 //check for anything with labeling 
-let searchForLabeling = allParameters |> List.exists (fun x -> x.Name.Value.Contains("labeling"))
+let searchForLabeling = exe |> List.exists (fun x -> x.Name.Value.Contains("labeling"))
 searchForLabeling
 
-let exe1 = getOntologyListByHeaderOntology getData "Isotope labeling"
+let exe1 = getOntologyListByHeaderOntology table.Value "Isotope labeling"
 let validate15N = exe1 |> List.exists (fun x -> x.Name.Value.Contains("15N"))
 validate15N
 
 
 
 
-let run = arc.Runs
 // CHECK RUNS 
 let runs = arc.Runs.[0].Tables.[0]
 let checkForMzMLFiles = runs.OutputNames |> List.exists(fun x -> x.Contains("mzML"))
@@ -184,7 +172,7 @@ let validaaation =
     else printfn "files detected"
 validaaation
 
-//rekursive FUnktion um checkt ok sind die Files da, jetzt müssen wir die Files in den metadaten suchen also table übergreifend 
+
 
 
     
