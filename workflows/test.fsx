@@ -14,18 +14,20 @@ open System
 
 let path = @"/home/paulinehans/Dokumente/TestARCForQualIQon"
 let path2= "/home/paulinehans/Dokumente/Arcs/CurtABC_ChlRe_PPI"
+let path3 = "/home/paulinehans/Dokumente/Arcs/Ru_ChlamyHeatstress"
 
-let arc = ARC.load path2
+let arc = ARC.load path3
 arc.MakeDataFilesAbsolute()
 arc.DataContextMapping()
 
-let getIdentifier = arc.AssayIdentifiers
-printfn "%A" getIdentifier
 
 //ASSAY CHECK
-
 //check isa file 
 //check for MeasurementType Proteomics/proteomics 
+let getIdentifier = arc.AssayIdentifiers
+let getAssayOfInterest = getIdentifier.[1]
+
+//check for tables
 let tables (arc: ARC) =
         arc.Assays.Count > 0
         && arc.Assays
@@ -34,17 +36,20 @@ tables arc
 
 let measurementType = arc.Assays |> Seq.exists (fun x -> x.MeasurementType.Value.NameText.ToLower().Contains"proteomics")  
 measurementType
-let technologyType = arc.Assays |> Seq.exists (fun x -> x.MeasurementType.Value.NameText.ToLower().Contains"mass spectrometry")
+let technologyType = arc.Assays |> Seq.exists (fun x -> x.TechnologyType.Value.NameText.ToLower().Contains"mass spectrometry")
 technologyType
 
 //check Assay tables 
 //output files 
 
-let outputFilesWiff = arc.GetAssay("dilutionSeriesChlamy_ASSAY").LastData
+let outputFilesWiff = arc.GetAssay(getAssayOfInterest).Data
 let verify : bool =
     outputFilesWiff
-    |> List.exists (fun x -> x.Name.Contains("wiff"))
+    |> Seq.exists (fun x -> 
+        x.Name.Contains("wiff") ||
+        x.Name.Contains("raw"))
 verify
+
 
 //check for Digestion 
 //Parameter Digestion 
